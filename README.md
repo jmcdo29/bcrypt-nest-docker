@@ -1,57 +1,21 @@
-# Nest Docker Template
+# Using Bcrypt with Docker and Node-Alpine
 
-Not much going on here, just a simple template repo for using NestJS and Docker together. I'll probably expand on it later. The resulting container is currently 101MB.
+Normally when we install bcrypt it needs to use `node-gyp`, some python bindings and C++ to finish setting up the JavaScript package to work. This is fine in fully fledged Unix images, but Alpine doesn't have access to these bindings immediately. So what we can do is use a multi-stage build process to build the bcrypt package in the full image, and make use of the built product in the alpine image at the end of the dockerfile.
 
-## Build
+## Testing it works
 
-You can either build the docker project using `docker` or `docker-compose`
-
-### Docker
-
-The following command builds the Docker image with the label "docker-nest"
+You can run the following commands to ensure everything works as expected:
 
 ```sh
-docker build . -t docker-nest
+docker build . -t docker-bcrypt-nest
+docker run -i -p 3000:3000 docker-bcrypt-nest
 ```
 
-Once build you can run it with 
+And in another terminal
 
 ```sh
-docker run -p 80:3000 --rm -d --name nest docker-nest
+curl http://localhost:3000 # this gets the hash from bcrypt for "hello world!"
+curl -X http://localhost:3000 -d "originalValue=hello world!&hash=<hash from first request>"
 ```
 
-This will expose your server on your localhost's port 80 so you can go to `http://localhost` and see the server respond. Also runs in detached mode and will remove the container when it is stopped.
-
-### Docker-Compose
-
-Using `docker-compose` to run the server, all you need is
-
-```sh
-docker-compose up -d
-```
-
-Which will run the build, and start the server mapping local port 80 ot the container's port 3000.
-
-## Tests
-
-### Docker
-
-You can build the test docker if you'd like with the following command
-
-```sh
-docker build -f test.Dockerfile .
-``` 
-
-### Docker-Compose
-
-A better idea would be to use the `docker-compose` built for tests specifically.
-
-```sh
-docker-compose -f docker-compose.ci.yml up -d
-```
-
-Afterwards you can stop the container with
-
-```sh
-docker-compose -f docker-compose.ci.yml down
-```
+Notice that we're still able to make use of bcrypt even though we're running an alpine image in the end.
